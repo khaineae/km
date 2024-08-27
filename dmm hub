@@ -1,0 +1,56 @@
+{
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local snowflakeGoal = 1000000
+local collectedCount = 0
+local collectTime = 1
+local maxHeightFromGround = 3
+
+local function isBelowMaxHeight(snowflakePart)
+    local startPos = snowflakePart.Position + Vector3.new(0, 10, 0)
+    local endPos = snowflakePart.Position - Vector3.new(0, 15, 0)
+    local ray = Ray.new(startPos, endPos - startPos)
+    local hitPart, hitPosition = workspace:FindPartOnRay(ray, character, false, true)
+    
+    if hitPart then
+        local groundHeight = hitPosition.Y
+        local snowflakeHeight = snowflakePart.Position.Y
+        return snowflakeHeight - groundHeight <= maxHeightFromGround
+    end
+    
+    return false
+end
+
+local function getClosestSnowflakePart()
+    local closestSnowflake = nil
+    local minDistance = math.huge
+    
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Part") and obj.Name == "SnowflakePart" then
+            if isBelowMaxHeight(obj) then
+                local distance = (obj.Position - character.HumanoidRootPart.Position).magnitude
+                if distance < minDistance then
+                    minDistance = distance
+                    closestSnowflake = obj
+                end
+            end
+        end
+    end
+    
+    return closestSnowflake
+end
+
+while collectedCount < snowflakeGoal do
+    local closestSnowflake = getClosestSnowflakePart()
+    if closestSnowflake then
+        local snowflakePosition = closestSnowflake.Position
+        character.HumanoidRootPart.CFrame = CFrame.new(snowflakePosition)
+        task.wait(collectTime)
+        collectedCount = collectedCount + 1
+    else
+        task.wait(1)
+    end
+end
+
+game:Shutdown()
+} = true
